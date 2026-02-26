@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Σύνθεση Συναρτήσεων — Παρουσίαση</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:   #0D2137;
+    --teal:   #028090;
+    --cyan:   #00C2D4;
+    --alice:  #9B3DBB;
+    --bob:    #1A9A5A;
+    --orange: #F09030;
+    --red:    #C0392B;
+    --dim:    rgba(255,255,255,0.10);
+    --dimmer: rgba(255,255,255,0.05);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: #fff;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 32px 11px;
+    border-bottom: 1px solid var(--dim);
+    flex-shrink: 0;
+  }
+  .topbar-title { font-family: 'Space Mono', monospace; font-size: 14px; color: var(--cyan); letter-spacing: 0.08em; }
+  .topbar-sub   { font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+  /* Gate toggles */
+  .gate-toggles { display: flex; gap: 10px; align-items: center; }
+  .toggle-label { font-size: 12px; color: rgba(255,255,255,0.3); font-family: 'Space Mono', monospace; margin-right: 4px; }
+  .toggle {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 8px; border: 1.5px solid;
+    font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700;
+    cursor: pointer; transition: all .2s; user-select: none;
+  }
+  .toggle.on  { opacity: 1; }
+  .toggle.off { opacity: 0.3; }
+  .toggle:hover { opacity: 0.8; }
+  .toggle-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .t-f  { border-color: var(--teal);   color: var(--teal); }
+  .t-f .toggle-dot  { background: var(--teal); }
+  .t-f.on  { background: rgba(2,128,144,0.15); }
+
+  .t-g  { border-color: var(--alice);  color: var(--alice); }
+  .t-g .toggle-dot  { background: var(--alice); }
+  .t-g.on  { background: rgba(155,61,187,0.15); }
+
+  .t-h  { border-color: var(--orange); color: var(--orange); }
+  .t-h .toggle-dot  { background: var(--orange); }
+  .t-h.on  { background: rgba(240,144,48,0.15); }
+
+  /* ── MAIN STAGE ── */
+  .stage {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 220px 1fr 300px;
+    gap: 0;
+    min-height: 0;
+    padding: 0;
+  }
+
+  /* ── LEFT: slider + x0 ── */
+  .left-panel {
+    border-right: 1px solid var(--dim);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 28px 24px;
+    gap: 28px;
+  }
+  .x0-label { font-family: 'Space Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.35); letter-spacing: 0.1em; margin-bottom: 6px; }
+  .x0-big   { font-family: 'Space Mono', monospace; font-size: 56px; font-weight: 700; color: var(--cyan); line-height: 1; }
+  .x0-ket   { font-family: 'Space Mono', monospace; font-size: 14px; color: rgba(255,255,255,0.25); margin-top: 4px; }
+
+  .slider-wrap { display: flex; flex-direction: column; gap: 8px; }
+  .slider-wrap label { font-size: 11px; color: rgba(255,255,255,0.3); font-family: 'Space Mono', monospace; letter-spacing: 0.06em; }
+  input[type=range] {
+    -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px;
+    background: var(--dim); outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--cyan); border: 3px solid var(--navy);
+    box-shadow: 0 0 0 2px var(--cyan); transition: box-shadow .2s;
+  }
+  input[type=range]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(0,194,212,0.25); }
+  .slider-ticks { display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,0.2); font-family: 'Space Mono', monospace; }
+
+  /* ── CENTER: pipeline ── */
+  .center-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 24px 32px;
+    gap: 0;
+  }
+
+  .pipeline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+  }
+
+  /* Node: input qubit */
+  .node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .node-circle {
+    width: 80px; height: 80px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    border: 2px solid; font-family: 'Space Mono', monospace;
+    position: relative;
+    transition: border-color .3s, background .3s;
+  }
+  .node-circle .nval { font-size: 20px; font-weight: 700; line-height: 1; }
+  .node-circle .nlbl { font-size: 10px; opacity: 0.5; margin-top: 2px; }
+  .node-tag { font-size: 11px; color: rgba(255,255,255,0.35); font-family: 'Space Mono', monospace; }
+
+  /* Gate box */
+  .gate-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+  }
+  .gate-box {
+    width: 72px; height: 72px; border-radius: 12px; border: 2px solid;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace; font-weight: 700;
+    transition: all .3s; cursor: default;
+    position: relative; overflow: hidden;
+  }
+  .gate-box::before {
+    content: ''; position: absolute; inset: 0;
+    opacity: 0.12; transition: opacity .3s;
+  }
+  .gate-box.active::before { opacity: 0.18; }
+  .gate-box.inactive {
+    opacity: 0.2;
+    filter: grayscale(0.5);
+  }
+  .gate-name  { font-size: 18px; font-weight: 700; }
+  .gate-sym   { font-size: 11px; opacity: 0.7; margin-top: 1px; }
+  .gate-label { font-size: 11px; color: rgba(255,255,255,0.3); font-family: 'Space Mono', monospace; }
+
+  /* Connector wire */
+  .wire {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    position: relative;
+  }
+  .wire-line {
+    width: 42px; height: 3px; border-radius: 2px;
+    background: rgba(255,255,255,0.12);
+    transition: background .3s;
+  }
+  .wire.active .wire-line { background: rgba(255,255,255,0.35); }
+  .wire-val {
+    font-family: 'Space Mono', monospace; font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 5px;
+    transition: color .3s, opacity .3s;
+    white-space: nowrap;
+  }
+  .wire-val.highlight { color: #fff; opacity: 1; }
+  .wire.inactive .wire-val { opacity: 0.2; }
+
+  /* Final result */
+  .result-node .node-circle {
+    width: 96px; height: 96px;
+  }
+  .result-node .nval { font-size: 26px; }
+
+  /* ── Formula row below pipeline ── */
+  .formula-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 28px;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .fbox {
+    background: var(--dimmer); border: 1px solid var(--dim);
+    border-radius: 10px; padding: 10px 16px;
+    font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700;
+    transition: all .3s; text-align: center;
+  }
+  .fbox.inactive { opacity: 0.22; }
+  .fbox-sep { font-size: 18px; color: rgba(255,255,255,0.2); font-weight: 300; padding: 0 4px; }
+  .fbox-eq {
+    background: var(--dimmer); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px; padding: 10px 20px;
+    font-family: 'Space Mono', monospace; font-size: 14px;
+    color: rgba(255,255,255,0.6);
+  }
+  .fbox-result-val { color: #fff; font-weight: 700; font-size: 17px; }
+
+  /* ── RIGHT: step-by-step ── */
+  .right-panel {
+    border-left: 1px solid var(--dim);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 24px 24px;
+    gap: 8px;
+    overflow: hidden;
+  }
+
+  .right-title { font-family: 'Space Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: 0.1em; margin-bottom: 6px; }
+
+  .step-card {
+    border-radius: 10px; border-left: 3px solid;
+    padding: 10px 14px;
+    background: var(--dimmer);
+    transition: all .3s;
+  }
+  .step-card.inactive { opacity: 0.2; filter: grayscale(0.5); }
+  .step-num { font-size: 10px; font-family: 'Space Mono', monospace; opacity: 0.5; margin-bottom: 4px; letter-spacing: 0.08em; }
+  .step-calc { font-family: 'Space Mono', monospace; font-size: 13px; line-height: 1.6; }
+  .step-res  { font-weight: 700; font-size: 15px; }
+
+  .divider { height: 1px; background: var(--dim); margin: 4px 0; }
+
+  .final-card {
+    background: rgba(255,255,255,0.07); border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 12px 14px; margin-top: 4px;
+  }
+  .final-label { font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'Space Mono', monospace; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .final-formula { font-family: 'Space Mono', monospace; font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
+  .final-value { font-family: 'Space Mono', monospace; font-size: 28px; font-weight: 700; color: var(--bob); }
+
+  /* ── BOTTOM BAR ── */
+  .bottombar {
+    padding: 10px 32px;
+    border-top: 1px solid var(--dim);
+    display: flex; align-items: center; justify-content: center; gap: 24px;
+    flex-shrink: 0;
+  }
+  .hint { font-size: 12px; color: rgba(255,255,255,0.3); font-family: 'Space Mono', monospace; }
+  .hint strong { color: rgba(255,255,255,0.65); }
+
+  @keyframes popIn {
+    0%   { transform: scale(0.85); opacity: 0.3; }
+    65%  { transform: scale(1.08); }
+    100% { transform: scale(1);   opacity: 1; }
+  }
+  .pop { animation: popIn .25s cubic-bezier(.4,0,.2,1) forwards; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div>
+    <div class="topbar-title">ΣΥΝΘΕΣΗ ΣΥΝΑΡΤΗΣΕΩΝ — (h∘g∘f)(x₀)</div>
+    <div class="topbar-sub">Ενεργοποίησε / Απενεργοποίησε πύλες · Σύρε το slider για αλλαγή x₀</div>
+  </div>
+  <div class="gate-toggles">
+    <span class="toggle-label">ΠΥΛΕΣ:</span>
+    <div class="toggle t-f on" id="tog-f" onclick="toggleGate('f')">
+      <span class="toggle-dot"></span> NOT f(x)=1−x
+    </div>
+    <div class="toggle t-g on" id="tog-g" onclick="toggleGate('g')">
+      <span class="toggle-dot"></span> Z g(x)=2x−0.4
+    </div>
+    <div class="toggle t-h on" id="tog-h" onclick="toggleGate('h')">
+      <span class="toggle-dot"></span> S h(x)=x/2+0.3
+    </div>
+  </div>
+</div>
+
+<!-- MAIN STAGE -->
+<div class="stage">
+
+  <!-- LEFT: x0 + slider -->
+  <div class="left-panel">
+    <div>
+      <div class="x0-label">ΑΡΧΙΚΟ QUBIT</div>
+      <div class="x0-big" id="x0-big">0.60</div>
+      <div class="x0-ket">|ψ₀⟩ = |<span id="x0-ket-val">0.60</span>⟩</div>
+    </div>
+    <div class="slider-wrap">
+      <label>x₀ — σύρε</label>
+      <input type="range" id="slider" min="0" max="100" value="60" oninput="update()">
+      <div class="slider-ticks">
+        <span>0</span><span>.2</span><span>.4</span><span>.6</span><span>.8</span><span>1</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER: pipeline -->
+  <div class="center-panel">
+    <div class="pipeline">
+
+      <!-- Input node -->
+      <div class="node">
+        <div class="node-circle" style="border-color:rgba(0,194,212,0.5);background:rgba(0,194,212,0.06);">
+          <span class="nval" style="color:var(--cyan);" id="pipe-x0">0.60</span>
+          <span class="nlbl" style="color:var(--cyan);">x₀</span>
+        </div>
+        <span class="node-tag">είσοδος</span>
+      </div>
+
+      <!-- Wire 0→f -->
+      <div class="wire active" id="wire0">
+        <div class="wire-line"></div>
+        <div class="wire-val"></div>
+      </div>
+
+      <!-- Gate f (NOT) -->
+      <div class="gate-wrap">
+        <div class="gate-box active" id="gate-f" style="border-color:var(--teal);background:rgba(2,128,144,0.12);">
+          <span class="gate-name" style="color:var(--teal);">NOT</span>
+          <span class="gate-sym"  style="color:var(--teal);">f</span>
+        </div>
+        <span class="gate-label" style="color:var(--teal);">1 − x</span>
+      </div>
+
+      <!-- Wire f→g -->
+      <div class="wire active" id="wire1">
+        <div class="wire-line"></div>
+        <div class="wire-val highlight" id="wire1-val">0.40</div>
+      </div>
+
+      <!-- Gate g (Z) -->
+      <div class="gate-wrap">
+        <div class="gate-box active" id="gate-g" style="border-color:var(--alice);background:rgba(155,61,187,0.12);">
+          <span class="gate-name" style="color:var(--alice);">Z</span>
+          <span class="gate-sym"  style="color:var(--alice);">g</span>
+        </div>
+        <span class="gate-label" style="color:var(--alice);">2x−0.4</span>
+      </div>
+
+      <!-- Wire g→h -->
+      <div class="wire active" id="wire2">
+        <div class="wire-line"></div>
+        <div class="wire-val highlight" id="wire2-val">0.40</div>
+      </div>
+
+      <!-- Gate h (S) -->
+      <div class="gate-wrap">
+        <div class="gate-box active" id="gate-h" style="border-color:var(--orange);background:rgba(240,144,48,0.12);">
+          <span class="gate-name" style="color:var(--orange);">S</span>
+          <span class="gate-sym"  style="color:var(--orange);">h</span>
+        </div>
+        <span class="gate-label" style="color:var(--orange);">x/2+0.3</span>
+      </div>
+
+      <!-- Wire h→output -->
+      <div class="wire active" id="wire3">
+        <div class="wire-line"></div>
+        <div class="wire-val"></div>
+      </div>
+
+      <!-- Output node -->
+      <div class="node result-node">
+        <div class="node-circle" id="out-circle" style="border-color:var(--bob);background:rgba(26,154,90,0.1);">
+          <span class="nval" id="pipe-out" style="color:var(--bob);">0.50</span>
+          <span class="nlbl" style="color:var(--bob);">y</span>
+        </div>
+        <span class="node-tag">Bob λαμβάνει</span>
+      </div>
+
+    </div><!-- pipeline -->
+
+    <!-- Formula row -->
+    <div class="formula-row">
+      <div class="fbox" id="fbox-f" style="border-color:var(--teal);color:var(--teal);">f(x)=1−x</div>
+      <span class="fbox-sep">∘</span>
+      <div class="fbox" id="fbox-g" style="border-color:var(--alice);color:var(--alice);">g(x)=2x−0.4</div>
+      <span class="fbox-sep">∘</span>
+      <div class="fbox" id="fbox-h" style="border-color:var(--orange);color:var(--orange);">h(x)=x/2+0.3</div>
+      <span class="fbox-sep">=</span>
+      <div class="fbox-eq">(<span id="comp-label">h∘g∘f</span>)(x₀) = <span class="fbox-result-val" id="fbox-result">0.50</span></div>
+    </div>
+
+  </div><!-- center-panel -->
+
+  <!-- RIGHT: steps -->
+  <div class="right-panel">
+    <div class="right-title">ΒΗΜΑ-ΒΗΜΑ</div>
+
+    <div class="step-card" id="sc-f" style="border-color:var(--teal);">
+      <div class="step-num">ΒΗΜΑ 1 — ΠΥΛΗ NOT</div>
+      <div class="step-calc" id="sc-f-calc" style="color:rgba(255,255,255,0.7);">
+        f(0.60) = 1 − 0.60
+      </div>
+      <div class="step-calc step-res" id="sc-f-res" style="color:var(--teal);">= 0.40</div>
+    </div>
+
+    <div class="step-card" id="sc-g" style="border-color:var(--alice);">
+      <div class="step-num">ΒΗΜΑ 2 — ΠΥΛΗ Z</div>
+      <div class="step-calc" id="sc-g-calc" style="color:rgba(255,255,255,0.7);">
+        g(0.40) = 2×0.40 − 0.4
+      </div>
+      <div class="step-calc step-res" id="sc-g-res" style="color:var(--alice);">= 0.40</div>
+    </div>
+
+    <div class="step-card" id="sc-h" style="border-color:var(--orange);">
+      <div class="step-num">ΒΗΜΑ 3 — ΠΥΛΗ S</div>
+      <div class="step-calc" id="sc-h-calc" style="color:rgba(255,255,255,0.7);">
+        h(0.40) = 0.40/2 + 0.3
+      </div>
+      <div class="step-calc step-res" id="sc-h-res" style="color:var(--orange);">= 0.50</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="final-card">
+      <div class="final-label">ΤΕΛΙΚΟ ΑΠΟΤΕΛΕΣΜΑ</div>
+      <div class="final-formula" id="final-formula">(h∘g∘f)(0.60) =</div>
+      <div class="final-value" id="final-value">0.50</div>
+    </div>
+  </div>
+
+</div><!-- stage -->
+
+<!-- BOTTOM BAR -->
+<div class="bottombar">
+  <span class="hint"><strong>(g∘f)(x)</strong> = g(f(x)) — εφάρμοσε πρώτα f, μετά g στο αποτέλεσμα</span>
+  <span class="hint" style="color:rgba(255,255,255,0.15)">|</span>
+  <span class="hint">Απενεργοποίησε πύλες πάνω για να δεις μερικές συνθέσεις</span>
+  <span class="hint" style="color:rgba(255,255,255,0.15)">|</span>
+  <span class="hint"><strong>f∘g ≠ g∘f</strong> — η σειρά έχει σημασία!</span>
+</div>
+
+<script>
+const fmt = v => (Math.round(v * 1000) / 1000).toFixed(2);
+
+let x0 = 0.60;
+const active = { f: true, g: true, h: true };
+
+const fn = {
+  f: x => 1 - x,
+  g: x => 2*x - 0.4,
+  h: x => x/2 + 0.3,
+};
+const labels = { f:'NOT', g:'Z', h:'S' };
+const colors  = { f:'var(--teal)', g:'var(--alice)', h:'var(--orange)' };
+
+function toggleGate(name) {
+  active[name] = !active[name];
+  const el = document.getElementById('tog-'+name);
+  el.className = 'toggle t-'+name + (active[name]?' on':' off');
+  update();
+}
+
+function pop(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+}
+
+function update() {
+  x0 = document.getElementById('slider').value / 100;
+
+  // Compute chain
+  let v0 = x0;
+  let v1 = active.f ? fn.f(v0) : v0;
+  let v2 = active.g ? fn.g(v1) : v1;
+  let v3 = active.h ? fn.h(v2) : v2;
+
+  const final = v3;
+
+  // ── LEFT
+  document.getElementById('x0-big').textContent     = fmt(x0);
+  document.getElementById('x0-ket-val').textContent = fmt(x0);
+
+  // ── PIPELINE nodes
+  document.getElementById('pipe-x0').textContent  = fmt(x0);
+  document.getElementById('wire1-val').textContent = fmt(v1);
+  document.getElementById('wire2-val').textContent = fmt(v2);
+
+  const outEl = document.getElementById('pipe-out');
+  const prevOut = outEl.textContent;
+  outEl.textContent = fmt(final);
+  if (prevOut !== fmt(final)) pop('pipe-out');
+
+  // Gate boxes active/inactive
+  ['f','g','h'].forEach(n => {
+    const gEl = document.getElementById('gate-'+n);
+    const fEl = document.getElementById('fbox-'+n);
+    const sEl = document.getElementById('sc-'+n);
+    if (active[n]) {
+      gEl.classList.remove('inactive'); gEl.classList.add('active');
+      fEl.classList.remove('inactive');
+      sEl.classList.remove('inactive');
+    } else {
+      gEl.classList.add('inactive'); gEl.classList.remove('active');
+      fEl.classList.add('inactive');
+      sEl.classList.add('inactive');
+    }
+  });
+
+  // Wire active states
+  document.getElementById('wire1').className = 'wire' + (active.f?' active':' inactive');
+  document.getElementById('wire2').className = 'wire' + (active.g?' active':' inactive');
+  document.getElementById('wire3').className = 'wire' + (active.h?' active':' inactive');
+
+  // ── RIGHT step cards
+  document.getElementById('sc-f-calc').textContent = `f(${fmt(x0)}) = 1 − ${fmt(x0)}`;
+  document.getElementById('sc-f-res').textContent  = `= ${fmt(v1)}`;
+
+  document.getElementById('sc-g-calc').textContent = `g(${fmt(v1)}) = 2×${fmt(v1)} − 0.4`;
+  document.getElementById('sc-g-res').textContent  = `= ${fmt(v2)}`;
+
+  document.getElementById('sc-h-calc').textContent = `h(${fmt(v2)}) = ${fmt(v2)}/2 + 0.3`;
+  document.getElementById('sc-h-res').textContent  = `= ${fmt(v3)}`;
+
+  // ── Composition label (only active gates)
+  const parts = ['h','g','f'].filter(n => active[n]);
+  const compLabel = parts.length === 0 ? 'id' : parts.join('∘');
+  document.getElementById('comp-label').textContent = '('+compLabel+')';
+
+  // ── Final
+  document.getElementById('fbox-result').textContent = fmt(final);
+  document.getElementById('final-formula').textContent = `(${compLabel})(${fmt(x0)}) =`;
+  const fvEl = document.getElementById('final-value');
+  fvEl.textContent = fmt(final);
+  pop('final-value');
+
+  // ── Out circle color based on active state
+  const outCircle = document.getElementById('out-circle');
+  outCircle.style.borderColor = 'var(--bob)';
+}
+
+update();
+</script>
+</body>
+</html>
