@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>f∘g ≠ g∘f — Παρουσίαση</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0D2137; --teal:#028090; --cyan:#00C2D4;
+    --alice:#9B3DBB; --bob:#1A9A5A; --orange:#F09030;
+    --red:#C0392B; --green:#1A9A5A;
+    --dim:rgba(255,255,255,.10); --dimmer:rgba(255,255,255,.05);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'DM Sans',sans-serif; background:var(--navy); color:#fff;
+    height:100vh; overflow:hidden; display:flex; flex-direction:column;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 28px 10px; border-bottom:1px solid var(--dim); flex-shrink:0; gap:16px;
+  }
+  .topbar-title{font-family:'Space Mono',monospace;font-size:13px;color:var(--cyan);letter-spacing:.08em;}
+  .topbar-sub{font-size:11px;color:rgba(255,255,255,.35);margin-top:2px;}
+
+  /* Gate toggles */
+  .gate-toggles{display:flex;gap:8px;align-items:center;}
+  .tog-label{font-size:11px;color:rgba(255,255,255,.3);font-family:'Space Mono',monospace;white-space:nowrap;}
+  .toggle{
+    display:flex;align-items:center;gap:6px;
+    padding:5px 13px;border-radius:8px;border:1.5px solid;
+    font-family:'Space Mono',monospace;font-size:11px;font-weight:700;
+    cursor:pointer;transition:all .2s;user-select:none;white-space:nowrap;
+  }
+  .toggle.on{opacity:1;} .toggle.off{opacity:0.28;} .toggle:hover{opacity:.78;}
+  .tdot{width:7px;height:7px;border-radius:50%;}
+  .tf {border-color:var(--teal);  color:var(--teal);}  .tf  .tdot{background:var(--teal);}  .tf.on {background:rgba(2,128,144,.15);}
+  .tg {border-color:var(--alice); color:var(--alice);} .tg  .tdot{background:var(--alice);} .tg.on {background:rgba(155,61,187,.15);}
+  .th {border-color:var(--orange);color:var(--orange);}.th  .tdot{background:var(--orange);}.th.on {background:rgba(240,144,48,.15);}
+
+  /* Slider */
+  .top-slider{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .ts-label{font-family:'Space Mono',monospace;font-size:11px;color:rgba(255,255,255,.35);white-space:nowrap;}
+  .ts-val{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--cyan);min-width:44px;text-align:right;}
+  input[type=range]{
+    -webkit-appearance:none;width:160px;height:4px;border-radius:2px;
+    background:var(--dim);outline:none;cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--cyan);border:3px solid var(--navy);box-shadow:0 0 0 2px var(--cyan);
+  }
+
+  /* ── STAGE ── */
+  .stage{
+    flex:1;display:grid;grid-template-columns:1fr 130px 1fr;
+    gap:0;min-height:0;align-items:stretch;
+  }
+
+  /* CENTER */
+  .divider-col{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border-left:1px solid var(--dim);border-right:1px solid var(--dim);
+    padding:12px 8px;gap:14px;
+  }
+  .neq-sign{font-family:'Space Mono',monospace;font-size:44px;font-weight:700;transition:color .4s;line-height:1;}
+  .neq-sign.different{color:var(--red);text-shadow:0 0 24px rgba(192,57,43,.5);}
+  .neq-sign.same     {color:var(--green);text-shadow:0 0 24px rgba(26,154,90,.4);}
+  .neq-lbl{font-size:10px;color:rgba(255,255,255,.3);font-family:'Space Mono',monospace;text-align:center;letter-spacing:.08em;}
+  .diff-badge{
+    padding:5px 10px;border-radius:14px;font-family:'Space Mono',monospace;
+    font-size:10px;font-weight:700;text-align:center;transition:all .4s;
+  }
+  .diff-badge.different{background:rgba(192,57,43,.2);border:1px solid var(--red);color:var(--red);}
+  .diff-badge.same     {background:rgba(26,154,90,.2); border:1px solid var(--green);color:var(--green);}
+  .diff-delta{font-family:'Space Mono',monospace;font-size:11px;color:rgba(255,255,255,.35);text-align:center;}
+
+  /* SIDES */
+  .side{display:flex;flex-direction:column;justify-content:center;padding:18px 22px;gap:12px;}
+  .side-title{
+    font-family:'Space Mono',monospace;font-size:11px;font-weight:700;
+    letter-spacing:.06em;padding-bottom:9px;border-bottom:1px solid var(--dim);
+    line-height:1.5;
+  }
+
+  /* Pipeline */
+  .pipe{display:flex;align-items:center;gap:0;flex-wrap:nowrap;}
+
+  .p-node{
+    flex-shrink:0;width:54px;height:54px;border-radius:50%;border:2px solid;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-family:'Space Mono',monospace;transition:all .3s;
+  }
+  .p-node .pv{font-size:14px;font-weight:700;line-height:1;}
+  .p-node .pl{font-size:9px;opacity:.5;}
+
+  .p-wire{flex-shrink:0;height:3px;border-radius:2px;background:rgba(255,255,255,.2);transition:all .3s;}
+
+  .p-gate{
+    flex-shrink:0;width:52px;height:52px;border-radius:9px;border:2px solid;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-family:'Space Mono',monospace;transition:all .3s;
+  }
+  .p-gate .gn{font-size:12px;font-weight:700;}
+  .p-gate .gs{font-size:9px;opacity:.6;}
+  .p-gate.inactive{opacity:.18;filter:grayscale(.6);}
+
+  .p-midval{flex-shrink:0;display:flex;flex-direction:column;align-items:center;}
+  .p-midval .wl{height:3px;border-radius:2px;background:rgba(255,255,255,.25);}
+  .p-midval .wv{font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,.55);margin-top:3px;white-space:nowrap;}
+
+  /* Step cards */
+  .step-card{border-radius:9px;border-left:3px solid;padding:8px 12px;background:var(--dimmer);}
+  .step-num {font-size:10px;font-family:'Space Mono',monospace;opacity:.4;margin-bottom:2px;letter-spacing:.08em;}
+  .step-calc{font-family:'Space Mono',monospace;font-size:12px;color:rgba(255,255,255,.65);line-height:1.5;}
+  .step-res {font-weight:700;font-size:14px;margin-top:2px;}
+
+  /* Result */
+  .res-box{border-radius:11px;border:2px solid;padding:11px 15px;transition:all .3s;}
+  .res-lbl{font-family:'Space Mono',monospace;font-size:11px;color:rgba(255,255,255,.4);}
+  .res-val{font-family:'Space Mono',monospace;font-size:32px;font-weight:700;transition:color .3s;}
+
+  /* BOTTOM */
+  .bottombar{
+    padding:8px 28px;border-top:1px solid var(--dim);
+    display:flex;align-items:center;justify-content:center;gap:20px;flex-shrink:0;
+  }
+  .hint{font-size:11px;color:rgba(255,255,255,.28);font-family:'Space Mono',monospace;}
+  .hint strong{color:rgba(255,255,255,.55);}
+
+  @keyframes popIn{0%{transform:scale(.85);opacity:.3}65%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+  .pop{animation:popIn .25s cubic-bezier(.4,0,.2,1) forwards;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">Α∘Β &nbsp;vs&nbsp; Β∘Α — Η ΣΕΙΡΑ ΕΧΕΙ ΣΗΜΑΣΙΑ</div>
+    <div class="topbar-sub">f(x)=1−x &nbsp;·&nbsp; g(x)=2x−0.4 &nbsp;·&nbsp; h(x)=x/2+0.3</div>
+  </div>
+  <div class="gate-toggles">
+    <span class="tog-label">ΠΥΛΕΣ:</span>
+    <div class="toggle tf on" id="tog-f" onclick="toggleGate('f')"><span class="tdot"></span>NOT f</div>
+    <div class="toggle tg on" id="tog-g" onclick="toggleGate('g')"><span class="tdot"></span>Z g</div>
+    <div class="toggle th on" id="tog-h" onclick="toggleGate('h')"><span class="tdot"></span>S h</div>
+  </div>
+  <div class="top-slider">
+    <span class="ts-label">x₀ =</span>
+    <span class="ts-val" id="ts-val">0.60</span>
+    <input type="range" id="slider" min="0" max="100" value="60" oninput="update()">
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- LEFT: reversed order -->
+  <div class="side">
+    <div class="side-title" id="left-title" style="color:var(--alice);">(f∘g)(x₀) — g πρώτα, μετά f</div>
+    <div class="pipe" id="left-pipe"></div>
+    <div id="left-steps"></div>
+    <div class="res-box" id="left-res-box" style="border-color:var(--alice);">
+      <div class="res-lbl" id="left-res-lbl">(f∘g)(x₀) =</div>
+      <div class="res-val" id="left-res"  style="color:var(--alice);">—</div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="divider-col">
+    <div class="neq-lbl">ΣΥΓΚΡΙΣΗ</div>
+    <div class="neq-sign different" id="neq-sign">≠</div>
+    <div class="diff-badge different" id="diff-badge">ΔΙΑΦΟΡΕΤΙΚΑ</div>
+    <div class="diff-delta" id="diff-delta">δ = 0.20</div>
+  </div>
+
+  <!-- RIGHT: normal order -->
+  <div class="side">
+    <div class="side-title" id="right-title" style="color:var(--bob);">(g∘f)(x₀) — f πρώτα, μετά g</div>
+    <div class="pipe" id="right-pipe"></div>
+    <div id="right-steps"></div>
+    <div class="res-box" id="right-res-box" style="border-color:var(--bob);">
+      <div class="res-lbl" id="right-res-lbl">(g∘f)(x₀) =</div>
+      <div class="res-val" id="right-res" style="color:var(--bob);">—</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="bottombar">
+  <span class="hint">Αριστερά: <strong>αντίστροφη σειρά</strong> · Δεξιά: <strong>κανονική σειρά</strong></span>
+  <span class="hint" style="color:rgba(255,255,255,.12)">|</span>
+  <span class="hint">Βρες x₀ που κάνει τα αποτελέσματα <strong>ίσα</strong></span>
+  <span class="hint" style="color:rgba(255,255,255,.12)">|</span>
+  <span class="hint">Με <strong>1 πύλη</strong> πάντα ίσα — γιατί;</span>
+</div>
+
+<script>
+const fmt = v => (Math.round(v*1000)/1000).toFixed(2);
+
+const GATES = {
+  f:{ name:'NOT', sym:'f', color:'var(--teal)',   hex:'#028090', bg:'rgba(2,128,144,.12)',
+      fn: x => 1-x,     lbl: (x,r) => `f(${fmt(x)}) = 1 − ${fmt(x)}` },
+  g:{ name:'Z',   sym:'g', color:'var(--alice)',  hex:'#9B3DBB', bg:'rgba(155,61,187,.12)',
+      fn: x => 2*x-0.4, lbl: (x,r) => `g(${fmt(x)}) = 2×${fmt(x)} − 0.4` },
+  h:{ name:'S',   sym:'h', color:'var(--orange)', hex:'#F09030', bg:'rgba(240,144,48,.12)',
+      fn: x => x/2+0.3, lbl: (x,r) => `h(${fmt(x)}) = ${fmt(x)}/2 + 0.3` },
+};
+
+const active = {f:true, g:true, h:true};
+
+function toggleGate(n){
+  active[n] = !active[n];
+  document.getElementById('tog-'+n).className = 'toggle t'+n+(active[n]?' on':' off');
+  update();
+}
+
+function pop(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+}
+
+function applyChain(gates, x0){
+  const vals=[x0];
+  gates.forEach(g=>vals.push(GATES[g].fn(vals[vals.length-1])));
+  return vals;
+}
+
+function buildPipe(containerId, gates, vals, x0){
+  const c = document.getElementById(containerId);
+  c.innerHTML='';
+
+  const W_WIRE = 14; // px wire width
+
+  // Input node
+  const inNode = document.createElement('div');
+  inNode.className='p-node';
+  inNode.style.cssText='border-color:rgba(0,194,212,.5);background:rgba(0,194,212,.06);';
+  inNode.innerHTML=`<span class="pv" style="color:var(--cyan);">${fmt(x0)}</span><span class="pl" style="color:var(--cyan);">x₀</span>`;
+  c.appendChild(inNode);
+
+  if(gates.length===0){
+    // straight wire to output
+    const w=document.createElement('div');
+    w.className='p-wire'; w.style.width='30px'; c.appendChild(w);
+  }
+
+  gates.forEach((gName, i)=>{
+    const G = GATES[gName];
+    // wire before gate
+    const w=document.createElement('div');
+    w.className='p-wire'; w.style.width=W_WIRE+'px'; c.appendChild(w);
+    // gate box
+    const gBox=document.createElement('div');
+    gBox.className='p-gate';
+    gBox.style.cssText=`border-color:${G.color};background:${G.bg};`;
+    gBox.innerHTML=`<span class="gn" style="color:${G.color};">${G.name}</span><span class="gs" style="color:${G.color};">${G.sym}</span>`;
+    c.appendChild(gBox);
+    // wire+value after gate (if not last)
+    const mv=document.createElement('div');
+    mv.className='p-midval';
+    const wl=document.createElement('div');
+    wl.className='wl'; wl.style.width=W_WIRE+'px';
+    const wv=document.createElement('div');
+    wv.className='wv';
+    wv.textContent = i<gates.length-1 ? fmt(vals[i+1]) : '';
+    mv.appendChild(wl); mv.appendChild(wv);
+    c.appendChild(mv);
+  });
+
+  // Output node — color of last gate
+  const lastColor = gates.length ? GATES[gates[gates.length-1]].color : 'var(--cyan)';
+  const outNode=document.createElement('div');
+  outNode.className='p-node';
+  outNode.style.cssText=`border-color:${lastColor};background:${lastColor}22;`;
+  outNode.innerHTML=`<span class="pv" style="color:${lastColor};">${fmt(vals[vals.length-1])}</span><span class="pl" style="color:${lastColor};">y</span>`;
+  c.appendChild(outNode);
+}
+
+function buildSteps(containerId, gates, vals){
+  const c=document.getElementById(containerId);
+  c.innerHTML='';
+  c.style.display='flex'; c.style.flexDirection='column'; c.style.gap='8px';
+  gates.forEach((gName,i)=>{
+    const G=GATES[gName];
+    const inV=vals[i], outV=vals[i+1];
+    const div=document.createElement('div');
+    div.className='step-card';
+    div.style.borderColor=G.color;
+    div.innerHTML=`<div class="step-num">ΒΗΜΑ ${i+1} — ΠΥΛΗ ${G.name}</div>
+      <div class="step-calc">${G.lbl(inV,outV)}</div>
+      <div class="step-res" style="color:${G.color};">= ${fmt(outV)}</div>`;
+    c.appendChild(div);
+  });
+}
+
+function compLabel(gates){
+  if(!gates.length) return 'id';
+  return '(' + [...gates].reverse().join('∘') + ')';
+}
+
+function update(){
+  const x0 = document.getElementById('slider').value/100;
+  document.getElementById('ts-val').textContent = fmt(x0);
+
+  const activeList = ['f','g','h'].filter(n=>active[n]);
+  const n = activeList.length;
+
+  // Right: normal order (f, then g, then h)
+  const rightGates = [...activeList];
+  // Left: reversed order
+  const leftGates  = [...activeList].reverse();
+
+  const rightVals = applyChain(rightGates, x0);
+  const leftVals  = applyChain(leftGates,  x0);
+
+  const rightResult = rightVals[rightVals.length-1];
+  const leftResult  = leftVals[leftVals.length-1];
+
+  // Labels
+  const rLabel = compLabel(rightGates);
+  const lLabel = compLabel(leftGates);
+
+  const rOrder = rightGates.length ? rightGates.map(g=>GATES[g].name).join(' → ') : '—';
+  const lOrder = leftGates.length  ? leftGates.map(g=>GATES[g].name).join(' → ')  : '—';
+
+  const rColor = rightGates.length ? GATES[rightGates[rightGates.length-1]].color : 'var(--bob)';
+  const lColor = leftGates.length  ? GATES[leftGates[leftGates.length-1]].color   : 'var(--alice)';
+
+  document.getElementById('right-title').textContent = `${rLabel}(x₀) — ${rOrder}`;
+  document.getElementById('right-title').style.color = rColor;
+  document.getElementById('left-title').textContent  = `${lLabel}(x₀) — ${lOrder}`;
+  document.getElementById('left-title').style.color  = lColor;
+
+  // Pipelines
+  buildPipe('right-pipe', rightGates, rightVals, x0);
+  buildPipe('left-pipe',  leftGates,  leftVals,  x0);
+
+  // Steps
+  buildSteps('right-steps', rightGates, rightVals);
+  buildSteps('left-steps',  leftGates,  leftVals);
+
+  // Results
+  document.getElementById('right-res-lbl').textContent = `${rLabel}(x₀) =`;
+  document.getElementById('left-res-lbl').textContent  = `${lLabel}(x₀) =`;
+
+  const rEl = document.getElementById('right-res');
+  const lEl = document.getElementById('left-res');
+  rEl.textContent = fmt(rightResult); rEl.style.color = rColor;
+  lEl.textContent = fmt(leftResult);  lEl.style.color = lColor;
+  document.getElementById('right-res-box').style.borderColor = rColor;
+  document.getElementById('left-res-box').style.borderColor  = lColor;
+  pop('right-res'); pop('left-res');
+
+  // Center
+  const diff = Math.abs(rightResult-leftResult);
+  const same = diff < 0.005 || n<=1;
+  document.getElementById('neq-sign').textContent  = same?'=':'≠';
+  document.getElementById('neq-sign').className    = 'neq-sign '+(same?'same':'different');
+  document.getElementById('diff-badge').textContent = same?(n<=1?'(1 πύλη)':'ΙΣΟΙ!'):'ΔΙΑΦΟΡΕΤΙΚΑ';
+  document.getElementById('diff-badge').className   = 'diff-badge '+(same?'same':'different');
+  document.getElementById('diff-delta').textContent =
+    n===0 ? '(καμία πύλη)' :
+    n===1 ? 'με 1 πύλη: πάντα ίσα' :
+    same  ? '✓ ισότητα εδώ' : `δ = ${fmt(diff)}`;
+}
+
+update();
+</script>
+</body>
+</html>
